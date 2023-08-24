@@ -1,0 +1,11 @@
+default:
+  BD:
+    default: "tests/bases_dados/access.accdb"
+    lite: "tests/bases_dados/lite.sqlite3"
+  ops: "ops"
+
+
+tests:
+  BD:
+    default: "tests/bases_dados/access.accdb"
+    lite: "tests/bases_dados/lite.sqlite3"
