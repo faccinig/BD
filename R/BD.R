@@ -2,7 +2,7 @@
 
 #' Identifica o banco de dados usado
 #'
-#' `BD_path()` identifica qual banco de dados está sendo usado pelo usuário
+#' `path()` identifica qual banco de dados está sendo usado pelo usuário
 #'
 #' @param .which Um character com o "apelido" do banco de dados
 #' (geralmente usado em conjunto com um arquivo config.yml).
@@ -11,7 +11,7 @@
 #' @returns Um character com o caminho do banco de dados associado ao apelido.
 #'
 #' @export
-BD_path <- function(.which = NULL, .path = NULL) {
+path <- function(.which = NULL, .path = NULL) {
   if (!is.null(.path)) {
     stopifnot("`.path` must be a character!" = is.character(.path),
               "`.path` must have length 1!" = length(.path) == 1L,
@@ -37,14 +37,14 @@ BD_path <- function(.which = NULL, .path = NULL) {
 
 #' Define o endereço do banco de dados usado
 #'
-#' `BD_set_path()` define o endereço do banco de dados a ser utilizado
+#' `set_path()` define o endereço do banco de dados a ser utilizado
 #'
 #' @param .path Endereço do banco de dados.
 #' @param .which Um character com o "apelido" do banco de dados
 #' (geralmente usado em conjunto com um arquivo config.yml).
 #'
 #' @export
-BD_set_path <- function(.path = NULL, .which = "default") {
+set_path <- function(.path = NULL, .which = "default") {
 
   stopifnot("`.path` must be defined!" = !is.null(.path),
             "`.path` must be a character!" = is.character(.path),
@@ -67,20 +67,20 @@ BD_set_path <- function(.path = NULL, .which = "default") {
 
 #' Remove endereço do banco de dados salvos
 #'
-#' `BD_clear_paths()` deleta endereços de bancos de dados que porventura estejam salvos na sessão.
+#' `clear_paths()` deleta endereços de bancos de dados que porventura estejam salvos na sessão.
 #'
 #' @export
-BD_clear_paths <- function() {
+clear_paths <- function() {
   set_paths(list())
   invisible()
 }
 
 #' Lista os bancos de dados salvos
 #'
-#' `BD_list_paths()`lista endereços de bancos de dados que porventura estejam salvos na sessão.
+#' `list_paths()`lista endereços de bancos de dados que porventura estejam salvos na sessão.
 #'
 #' @export
-BD_list_paths <- function() {
+list_paths <- function() {
   lst_paths <- tryCatch(config::get("BD"),
                         error = identity)
   if (is.null(lst_paths) || inherits(lst_paths, "error")) lst_paths <- list()
@@ -97,8 +97,6 @@ BD_list_paths <- function() {
 
 BD_type <- function(.path) {
   switch (tolower(tools::file_ext(.path)),
-          "accdb" = "access",
-          "mdb" = "access",
           "sqlite" = "lite",
           "sqlite3" = "lite",
           "db" = "lite")
@@ -109,7 +107,7 @@ BD_type <- function(.path) {
 
 #' Relaciona dados da conexão com banco de dados
 #'
-#' `BD_connection()` mostra informações da conexão ativa com o banco de dados.
+#' `connection()` mostra informações da conexão ativa com o banco de dados.
 #'
 #' @param .path Endereço do banco de dados.
 #' @param .which Um character com o "apelido" do banco de dados
@@ -118,8 +116,8 @@ BD_type <- function(.path) {
 #' @return Um character com os dados do banco de dados.
 #'
 #' @export
-BD_connection <- function(.which = NULL, .path = NULL) {
-  .path <- BD_path(.which, .path)
+connection <- function(.which = NULL, .path = NULL) {
+  .path <- path(.which, .path)
   if (is.null(.path)) stop("N")
   type <- BD_type(.path)
   if (is.null(type)) stop("invalid path!")
@@ -129,7 +127,7 @@ BD_connection <- function(.which = NULL, .path = NULL) {
                             Mode = "Share Deny None",
                             Dbq = .path,
                             encoding = "Latin1"),
-    lite = DBI::dbConnect(RSQLite::SQLite(), .path)
+    lite = DBI::dbConnect(RSQLite::SQLite(), .path, extended_types = TRUE)
   )
 }
 
@@ -137,9 +135,9 @@ BD_connection <- function(.which = NULL, .path = NULL) {
 # db ----
 
 #' @export
-BD_glueData <- function(.data, stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
+glueData <- function(.data, stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
@@ -147,9 +145,9 @@ BD_glueData <- function(.data, stmt, .which = NULL, .path = NULL, .con = NULL, .
 }
 
 #' @export
-BD_glue <- function(stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
+glue <- function(stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
@@ -157,63 +155,63 @@ BD_glue <- function(stmt, .which = NULL, .path = NULL, .con = NULL, .envir = par
 }
 
 #' @export
-BD_GetQuery <- function(stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
+GetQuery <- function(stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
-  sql <- BD_glue(stmt, .con = .con, .envir = .envir)
+  sql <- glue(stmt, .con = .con, .envir = .envir)
 
   tibble::as_tibble(DBI::dbGetQuery(.con, sql))
 }
 
 #' @export
-BD_GetQueryData <- function(.data, stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
+GetQueryData <- function(.data, stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
-  sql <- BD_glueData(.data, stmt, .con = .con, .envir = .envir)
-  if (length(sql) == 1L) return(BD_GetQuery(sql, .con = .con))
+  sql <- glueData(.data, stmt, .con = .con, .envir = .envir)
+  if (length(sql) == 1L) return(GetQuery(sql, .con = .con))
 
-  tbls <- lapply(sql, BD_GetQuery, .con = .con)
+  tbls <- lapply(sql, GetQuery, .con = .con)
   tbls <- do.call(rbind, tbls)
 
   tibble::as_tibble(tbls)
 }
 
 #' @export
-BD_ExecuteData <- function(.data, stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
+ExecuteData <- function(.data, stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
-  sql <- BD_glueData(.data, stmt, .con = .con, .envir = .envir)
+  sql <- glueData(.data, stmt, .con = .con, .envir = .envir)
   res <- vapply(sql, function(statement) DBI::dbExecute(.con, statement), integer(1L))
 
   sum(res)
 }
 
 #' @export
-BD_Execute <- function(stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
+Execute <- function(stmt, .which = NULL, .path = NULL, .con = NULL, .envir = parent.frame()) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
-  sql <- BD_glue(stmt, .con = .con, .envir = .envir)
+  sql <- glue(stmt, .con = .con, .envir = .envir)
   res <- vapply(sql, function(statement) DBI::dbExecute(.con, statement), integer(1L))
 
   sum(res)
 }
 
 #' @export
-BD_ReadTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
+ReadTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
@@ -221,62 +219,51 @@ BD_ReadTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
 }
 
 #' @export
-BD_WriteTable <- function(value, name, append = TRUE, .which = NULL, .path = NULL, .con = NULL) {
+WriteTable <- function(value, name,
+                       .which = NULL, .path = NULL, .con = NULL,
+                       append = TRUE, fields = NULL) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
   overwrite <- !append
-  # as funções abaixo estão sendo utilizadas de forma inadequada. o ideal era
-  # criar o método S4 para "ACCESS" e "SQLiteConnection" mas ao substituir o
-  # método para "SQLiteConnection" original - do RSQlite - não sei como retornar
-  # para que o método original dê sequencia..
-  # talvez a solução seja criar um novo tipo de objeto que herde do "SQLiteConnection"
-  WriteTable <- switch (class(.con),
-                        "ACCESS" = WriteTable_access,
-                        "SQLiteConnection" = WriteTable_lite)
-  WriteTable(.con, value, name, append, overwrite)
-}
 
-
-WriteTable_access <- function(.con, value, name, append, overwrite) {
   DBI::dbWriteTable(.con, name, value,
                     append = append ,
                     overwrite = overwrite,
-                    batch_rows = 1L)
-}
-
-WriteTable_lite <- function(.con, value, name, append, overwrite) {
-
-  dt_col <- vapply(value,
-                   function(x) inherits(x, "Date") | inherits(x, "POSIXt"),
-                   logical(1))
-
-  value[dt_col] <- lapply(value[dt_col], as.character)
-
-  dt_col <- vapply(value,
-                   function(x) inherits(x, "Period"),
-                   logical(1))
-
-  value[dt_col] <- lapply(value[dt_col], function(x) format(lubridate::as_date(.x),"%T"))
-
-  DBI::dbWriteTable(.con, name, value,
-                    append = append ,
-                    overwrite = overwrite)
-}
-
-
-
-#' @export
-BD_AppendTable <- function(value, name, .which = NULL, .path = NULL, .con = NULL) {
-  BD_WriteTable(value, name, append = TRUE,.which = .which, .path = .path, .con = .con)
+                    field.types = fields)
 }
 
 #' @export
-BD_RemoveTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
+CreateTable <- function(name, fields,
+                        .which = NULL, .path = NULL, .con = NULL) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
+    on.exit(DBI::dbDisconnect(.con))
+  }
+
+  DBI::dbCreateTable(.con, name = name, fields = fields)
+}
+
+#' @export
+AppendTable <- function(value, name, .which = NULL, .path = NULL, .con = NULL) {
+  WriteTable(value, name, append = TRUE,.which = .which, .path = .path, .con = .con)
+}
+
+#' @export
+OverwriteTable <- function(value, name,
+                           .which = NULL, .path = NULL, .con = NULL,
+                           fields = NULL) {
+  WriteTable(value, name, append = FALSE,
+             .which = .which, .path = .path, .con = .con,
+             fields = fields)
+}
+
+#' @export
+RemoveTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
+  if (is.null(.con)) {
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
@@ -284,9 +271,9 @@ BD_RemoveTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
 }
 
 #' @export
-BD_ExistsTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
+ExistsTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
@@ -294,9 +281,9 @@ BD_ExistsTable <- function(name, .which = NULL, .path = NULL, .con = NULL) {
 }
 
 #' @export
-BD_ListTables <- function(.which = NULL, .path = NULL, .con = NULL) {
+ListTables <- function(.which = NULL, .path = NULL, .con = NULL) {
   if (is.null(.con)) {
-    .con <- BD_connection(.which = .which, .path = .path)
+    .con <- connection(.which = .which, .path = .path)
     on.exit(DBI::dbDisconnect(.con))
   }
 
