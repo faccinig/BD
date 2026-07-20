@@ -12,7 +12,12 @@ R package `BD` — internal wrapper around DBI/RSQLite for database operations. 
 
 ## Architecture
 - `R/BD_env.R` — internal environment (`BD_env`) storing path aliases across a session
-- `R/BD.R` — main API: `path()`, `set_path()`, `connection()`, `GetQuery()`, `Execute()`, `ReadTable()`, `WriteTable()`, etc.
+- `R/path.R` — path resolution and aliases: `path()`, `set_path()`, `clear_paths()`, `list_paths()`, `BD_type()`
+- `R/connection.R` — `connection()` (SQLite via DBI/RSQLite)
+- `R/glue.R` — SQL interpolation: `glue()`, `glueData()`
+- `R/query.R` — query helpers: `GetQuery()`, `GetQueryData()`
+- `R/execute.R` — DML execution: `Execute()`, `ExecuteData()`
+- `R/table.R` — table CRUD: `ReadTable()`, `WriteTable()`, `CreateTable()`, `AppendTable()`, `OverwriteTable()`, `RemoveTable()`, `ExistsTable()`, `ListTables()`
 
 ## Database path resolution
 `path(.which, .path)` resolves DB paths via:
@@ -37,7 +42,7 @@ When `.con` is provided, the caller is responsible for disconnecting.
 - `covr::package_coverage()` also works because tests provision their own `config.yml`.
 
 ## Gotchas
-- `BD_type()` (internal, in `BD.R`) only recognizes `sqlite`, `sqlite3`, and `db` extensions. ACCDB paths will fail validation.
+- `BD_type()` (internal, in `R/path.R`) only recognizes `sqlite`, `sqlite3`, and `db` extensions. ACCDB paths will fail validation.
 - `config.yml` is excluded from the built package via `.Rbuildignore`; deployed packages use their own `config::get("BD")`.
 - `path()` calls `config::get("BD")` without `tryCatch` — if `config.yml` is absent, `path()` will error rather than return `NULL`. This is intentional: in production, a `config.yml` is always present. `list_paths()` handles the missing-config case gracefully via `tryCatch` for diagnostic use.
 - `BD_type()` returns `NULL` (no `default` case) for unrecognized extensions — used as a validation gate in `path()` and `set_path()`. Extensions like `.accdb` or extensionless paths are intentionally rejected.
