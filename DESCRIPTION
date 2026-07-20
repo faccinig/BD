@@ -1,5 +1,5 @@
 Package: BD
-Title: Bases de dados internas do ACCESS e SQlite
+Title: Wrapper para bancos de dados SQLite
 Version: 0.0.1.0
 Authors@R: 
     c(person(given = "Guilherme",
@@ -10,21 +10,21 @@ Authors@R:
            family = "Escouto",
            role = c("aut"),
            email = "brunna_escouto@banrisul.com.br"))
-Description: Simplifica o uso das Bases de dados internas
-    do ACCESS e SQlite
+Description: Simplifica o uso de bancos de dados SQLite,
+    fornecendo funções para consulta, execução e manipulação
+    de tabelas com interpolação segura de SQL.
 License: GPL-2
 Imports: 
     DBI,
-    methods,
-    odbc,
     glue,
     RSQLite,
-    lubridate,
+    tibble,
     tools,
     config
 Suggests: 
-    testthat (>= 2.1.0)
+    testthat (>= 2.1.0),
+    covr
 Encoding: UTF-8
 LazyData: true
 Repository: BanriCRAN
-RoxygenNote: 7.2.0
+RoxygenNote: 7.3.2
